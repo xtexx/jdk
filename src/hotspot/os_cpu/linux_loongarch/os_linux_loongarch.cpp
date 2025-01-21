@@ -78,8 +78,9 @@
 #define REG_FP 22
 
 NOINLINE address os::current_stack_pointer() {
-  register void *sp __asm__ ("$r3");
-  return (address) sp;
+  void *sp;
+  asm volatile("add.d %0, $r3, $r0" : "=r"(sp));
+  return (address)sp;
 }
 
 char* os::non_memory_address_word() {
