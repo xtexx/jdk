@@ -28,7 +28,6 @@
  * available on the same license terms set forth above.
  */
 
-#include "precompiled.hpp"
 #include "cds/filemap.hpp"
 #include "ci/ciField.hpp"
 #include "ci/ciInstance.hpp"
