@@ -71,7 +71,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
 
     // ---------------- Arithmetic ----------------
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.SUB_VL, ">0"})
     public long[] vectorNeg() {
         long[] res = new long[SIZE];
@@ -82,7 +82,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "avx512vl", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "avx512vl", "true", "rvv", "true"},
         counts = {IRNode.ABS_VL, ">0"})
     public long[] vectorAbs() {
         long[] res = new long[SIZE];
@@ -93,7 +93,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.ADD_VL, ">0"})
     public long[] vectorAdd() {
         long[] res = new long[SIZE];
@@ -104,7 +104,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.SUB_VL, ">0"})
     public long[] vectorSub() {
         long[] res = new long[SIZE];
@@ -115,7 +115,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx512dq", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx512dq", "true", "rvv", "true"},
         counts = {IRNode.MUL_VL, ">0"})
     public long[] vectorMul() {
         long[] res = new long[SIZE];
@@ -126,9 +126,9 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "sse4.1", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "sse4.1", "true", "rvv", "true"},
         counts = {IRNode.ADD_VL, ">0"})
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "sse4.1", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "sse4.1", "true", "rvv", "true"},
         counts = {IRNode.MUL_VL, ">0"})
     public long[] vectorMulAdd() {
         long[] res = new long[SIZE];
@@ -139,7 +139,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "sse4.1", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "sse4.1", "true", "rvv", "true"},
         counts = {IRNode.MUL_VL, ">0", IRNode.SUB_VL, ">0"})
     public long[] vectorMulSub() {
         long[] res = new long[SIZE];
@@ -151,7 +151,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
 
     // ---------------- Logic ----------------
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.XOR_VL, ">0"})
     public long[] vectorNot() {
         long[] res = new long[SIZE];
@@ -162,7 +162,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.AND_VL, ">0"})
     public long[] vectorAnd() {
         long[] res = new long[SIZE];
@@ -173,7 +173,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.OR_VL, ">0"})
     public long[] vectorOr() {
         long[] res = new long[SIZE];
@@ -184,7 +184,7 @@ public class BasicLongOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.XOR_VL, ">0"})
     public long[] vectorXor() {
         long[] res = new long[SIZE];

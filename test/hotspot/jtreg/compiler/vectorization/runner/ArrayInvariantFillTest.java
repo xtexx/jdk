@@ -47,7 +47,7 @@
  *                   -XX:+OptimizeFill
  *                   compiler.vectorization.runner.ArrayInvariantFillTest
  *
- * @requires (os.simpleArch == "x64") | (os.simpleArch == "aarch64") | (os.simpleArch == "loongarch64")
+ * @requires (os.simpleArch == "x64") | (os.simpleArch == "aarch64") | (os.simpleArch == "riscv64") | (os.simpleArch == "loongarch64")
  * @requires vm.compiler2.enabled
  */
 
@@ -76,10 +76,10 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
 
     // ---------------- Simple Fill ----------------
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "false"},
         counts = {IRNode.REPLICATE_B, ">0"})
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "true"},
         counts = {IRNode.REPLICATE_B, "0"})
     public byte[] fillByteArray() {
@@ -91,10 +91,10 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "false"},
         counts = {IRNode.REPLICATE_S, ">0"})
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "true"},
         counts = {IRNode.REPLICATE_S, "0"})
     public short[] fillShortArray() {
@@ -106,10 +106,10 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "false"},
         counts = {IRNode.REPLICATE_S, ">0"})
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "true"},
         counts = {IRNode.REPLICATE_S, "0"})
     public char[] fillCharArray() {
@@ -121,10 +121,10 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "false"},
         counts = {IRNode.REPLICATE_I, ">0"})
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "true"},
         counts = {IRNode.REPLICATE_I, "0"})
     public int[] fillIntArray() {
@@ -136,7 +136,7 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.REPLICATE_L, ">0"})
     public long[] fillLongArray() {
         long[] res = new long[SIZE];
@@ -147,10 +147,10 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "false"},
         counts = {IRNode.REPLICATE_F, ">0"})
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "true"},
         counts = {IRNode.REPLICATE_F, "0"})
     public float[] fillFloatArray() {
@@ -162,7 +162,7 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.REPLICATE_D, ">0"})
     public double[] fillDoubleArray() {
         double[] res = new double[SIZE];
@@ -174,7 +174,7 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
 
     // ---------------- Fill With Type Change ----------------
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.REPLICATE_L, ">0"})
     public long[] fillLongArrayWithInt() {
         long[] res = new long[SIZE];
@@ -185,7 +185,7 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.REPLICATE_L, ">0"})
     public long[] fillLongArrayWithUnsigned() {
         long[] res = new long[SIZE];
@@ -196,7 +196,7 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         counts = {IRNode.REPLICATE_L, ">0"})
     public long[] fillLongArrayWithFloat() {
         long[] res = new long[SIZE];
@@ -207,10 +207,10 @@ public class ArrayInvariantFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "false"},
         counts = {IRNode.REPLICATE_I, ">0"})
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "sse2", "true", "rvv", "true"},
         applyIf = {"OptimizeFill", "true"},
         counts = {IRNode.REPLICATE_I, "0"})
     public int[] fillIntArrayWithDouble() {

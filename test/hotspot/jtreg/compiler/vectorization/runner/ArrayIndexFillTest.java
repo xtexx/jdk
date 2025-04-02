@@ -42,7 +42,7 @@
  *                   -XX:+WhiteBoxAPI
  *                   compiler.vectorization.runner.ArrayIndexFillTest
  *
- * @requires (os.simpleArch == "x64") | (os.simpleArch == "aarch64") | (os.simpleArch == "loongarch64")
+ * @requires (os.simpleArch == "x64") | (os.simpleArch == "aarch64") | (os.simpleArch == "riscv64") | (os.simpleArch == "loongarch64")
  * @requires vm.compiler2.enabled
  */
 
@@ -66,7 +66,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public byte[] fillByteArray() {
         byte[] res = new byte[SIZE];
@@ -77,7 +77,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public short[] fillShortArray() {
         short[] res = new short[SIZE];
@@ -88,7 +88,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public char[] fillCharArray() {
         char[] res = new char[SIZE];
@@ -99,7 +99,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public int[] fillIntArray() {
         int[] res = new int[SIZE];
@@ -110,7 +110,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, "=0"})
     // The ConvI2L can be split through the AddI, creating a mix of
     // ConvI2L(AddI) and AddL(ConvI2L) cases, which do not vectorize.
@@ -124,7 +124,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     // The variable init/limit has the consequence that we do not split
     // the ConvI2L through the AddI.
@@ -137,7 +137,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, "=0"})
     // See: JDK-8332878
     public float[] fillFloatArray() {
@@ -149,7 +149,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public float[] fillFloatArray2() {
         float[] res = new float[SIZE];
@@ -160,7 +160,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, "=0"})
     // See: JDK-8332878
     public double[] fillDoubleArray() {
@@ -172,7 +172,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public double[] fillDoubleArray2() {
         double[] res = new double[SIZE];
@@ -183,7 +183,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public short[] fillShortArrayWithShortIndex() {
         short[] res = new short[SIZE];
@@ -194,7 +194,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public int[] fillMultipleArraysDifferentTypes1() {
         int[] res1 = new int[SIZE];
@@ -207,7 +207,7 @@ public class ArrayIndexFillTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
     public char[] fillMultipleArraysDifferentTypes2() {
         int[] res1 = new int[SIZE];

@@ -117,6 +117,8 @@ public class IREncodingPrinter {
         "sve",
         // Riscv64
         "rvv",
+        "zbkb",
+        "zfh",
         "zvbb",
         "zvfh",
         // LoongArch

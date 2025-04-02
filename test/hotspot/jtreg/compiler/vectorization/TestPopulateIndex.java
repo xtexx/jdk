@@ -34,6 +34,7 @@
 * @requires vm.compiler2.enabled
 * @requires (os.simpleArch == "x64" & vm.cpu.features ~= ".*avx2.*") |
 *           (os.simpleArch == "aarch64" & vm.cpu.features ~= ".*sve.*") |
+*           (os.simpleArch == "riscv64" & vm.cpu.features ~= ".*rvv.*") |
 *           (os.simpleArch == "loongarch64")
 * @library /test/lib /
 * @run driver compiler.vectorization.TestPopulateIndex
