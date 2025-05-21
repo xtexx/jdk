@@ -29,7 +29,7 @@
  */
 
 // archDesc.cpp - Internal format for architecture definition
-#include <unordered_set>
+#include <unordered_set>  // do not reorder
 #include "adlc.hpp"
 
 static FILE *errfile = stderr;
