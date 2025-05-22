@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022, 2023, Arm Limited. All rights reserved.
  * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2025, Rivos Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,12 +82,9 @@ public class ArrayShiftOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.STORE_VECTOR, ">0"})
-    @IR(applyIfCPUFeature = {"avx512f", "true"},
-        counts = {IRNode.ROTATE_RIGHT_V, ">0"})
-    @IR(applyIfPlatform = {"riscv64", "true"},
-        applyIfCPUFeature = {"zvbb", "true"},
+    @IR(applyIfCPUFeatureOr = {"avx512f", "true", "zvbb", "true"},
         counts = {IRNode.ROTATE_RIGHT_V, ">0"})
     public int[] intCombinedRotateShift() {
         int[] res = new int[SIZE];
@@ -97,9 +95,9 @@ public class ArrayShiftOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.STORE_VECTOR, ">0"})
-    @IR(applyIfCPUFeature = {"avx512f", "true"},
+    @IR(applyIfCPUFeatureOr = {"avx512f", "true", "zvbb", "true"},
         counts = {IRNode.ROTATE_RIGHT_V, ">0"})
     // Requires size to not be known at compile time, otherwise the shift
     // can get constant folded with the (iv + const) pattern from the
@@ -113,12 +111,9 @@ public class ArrayShiftOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"asimd", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"asimd", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.STORE_VECTOR, ">0"})
-    @IR(applyIfCPUFeature = {"avx512f", "true"},
-        counts = {IRNode.ROTATE_RIGHT_V, ">0"})
-    @IR(applyIfPlatform = {"riscv64", "true"},
-        applyIfCPUFeature = {"zvbb", "true"},
+    @IR(applyIfCPUFeatureOr = {"avx512f", "true", "zvbb", "true"},
         counts = {IRNode.ROTATE_RIGHT_V, ">0"})
     public long[] longCombinedRotateShift() {
         long[] res = new long[SIZE];
@@ -141,9 +136,9 @@ public class ArrayShiftOpTest extends VectorizationTestRunner {
     }
 
     @Test
-    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
+    @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true", "rvv", "true"},
         counts = {IRNode.STORE_VECTOR, ">0"})
-    @IR(applyIfCPUFeature = {"avx512f", "true"},
+    @IR(applyIfCPUFeatureOr = {"avx512f", "true", "zvbb", "true"},
         counts = {IRNode.ROTATE_RIGHT_V, ">0"})
     @IR(applyIfCPUFeatureOr = {"sve", "true", "avx2", "true"},
         counts = {IRNode.POPULATE_INDEX, ">0"})
