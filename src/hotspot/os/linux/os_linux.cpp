@@ -62,7 +62,6 @@
 #include "runtime/osThread.hpp"
 #include "runtime/perfMemory.hpp"
 #include "runtime/sharedRuntime.hpp"
-#include "runtime/statSampler.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/threads.hpp"
 #include "runtime/threadSMR.hpp"
