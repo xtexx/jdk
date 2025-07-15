@@ -32,12 +32,6 @@
  */
 
 /*
- * This file has been modified by Loongson Technology in 2022, These
- * modifications are Copyright (c) 2022, Loongson Technology, and are made
- * available on the same license terms set forth above.
- */
-
-/*
  * @test
  * @bug 4486658
  * @summary Exercise multithreaded maps, by default ConcurrentHashMap.
@@ -49,15 +43,6 @@
  * parsing from command line.)
  * @library /test/lib
  * @run main/timeout=1600 MapLoops
- */
-
-/*
- * @test
- * @summary Exercise multithreaded maps, using only heavy monitors.
- * @requires os.arch=="x86" | os.arch=="i386" | os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64" | os.arch == "ppc64" | os.arch == "ppc64le" | os.arch == "riscv64" | os.arch == "s390x" | os.arch== "loongarch64"
- * @requires vm.debug
- * @library /test/lib
- * @run main/othervm/timeout=1600 -XX:LockingMode=0 -XX:+VerifyHeavyMonitors MapLoops
  */
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
