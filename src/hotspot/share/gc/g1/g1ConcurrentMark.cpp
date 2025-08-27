@@ -1386,7 +1386,7 @@ void G1ConcurrentMark::remark() {
   }
 
   G1Policy* policy = _g1h->policy();
-  policy->record_concurrent_mark_remark_start();
+  policy->record_pause_start_time();
 
   double start = os::elapsedTime();
 
@@ -1522,7 +1522,7 @@ void G1ConcurrentMark::cleanup() {
   }
 
   G1Policy* policy = _g1h->policy();
-  policy->record_concurrent_mark_cleanup_start();
+  policy->record_pause_start_time();
 
   double start = os::elapsedTime();
 

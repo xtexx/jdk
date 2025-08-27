@@ -33,9 +33,9 @@
 
 #include "oops/stackChunkOop.hpp"
 
-#include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/barrierSetStackChunk.hpp"
+#include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "memory/memRegion.hpp"
 #include "memory/universe.hpp"
