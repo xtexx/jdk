@@ -34,7 +34,8 @@
  * @summary Test range check hoisting for some scaled iv at array index
  * @library /test/lib /
  * @requires vm.flagless
- * @requires vm.debug & vm.compiler2.enabled & (os.simpleArch == "x64" | os.arch == "aarch64" | os.arch == "riscv64" | os.arch == "loongarch64")
+ * @requires vm.debug & vm.compiler2.enabled
+ * @requires os.simpleArch == "x64" | os.arch == "aarch64" | (os.arch == "riscv64" & vm.cpu.features ~= ".*rvv.*") | os.arch == "loongarch64"
  * @modules jdk.incubator.vector
  * @run main/othervm compiler.rangechecks.TestRangeCheckHoistingScaledIV
  */
