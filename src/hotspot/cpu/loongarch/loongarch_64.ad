@@ -988,31 +988,25 @@ bool Matcher::match_rule_supported(int opcode) {
     case Op_StrInflatedCopy:
     case Op_StrCompressedCopy:
     case Op_EncodeISOArray:
-      if (!UseLSX)
-        return false;
+      return UseLSX;
     case Op_PopCountI:
     case Op_PopCountL:
       return UsePopCountInstruction;
     case Op_FmaF:
     case Op_FmaD:
-    case Op_FmaVF:
-    case Op_FmaVD:
-      if (!UseFMA)
-        return false;
+      return UseFMA;
     case Op_CompareAndSwapB:
     case Op_CompareAndSwapS:
     case Op_CompareAndExchangeB:
     case Op_CompareAndExchangeS:
     case Op_WeakCompareAndSwapB:
     case Op_WeakCompareAndSwapS:
-      if (!UseAMCAS)
-        return false;
+      return UseAMCAS;
     case Op_GetAndSetB:
     case Op_GetAndSetS:
     case Op_GetAndAddB:
     case Op_GetAndAddS:
-      if (!UseAMBH)
-        return false;
+      return UseAMBH;
     default:
       break;
   }
@@ -1031,20 +1025,12 @@ bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType bt) {
   switch (opcode) {
     case Op_RotateRightV:
     case Op_RotateLeftV:
-      if (bt != T_INT && bt != T_LONG) {
-        return false;
-      }
-      break;
+      return (bt == T_INT || bt == T_LONG);
     case Op_MaxReductionV:
     case Op_MinReductionV:
-      if (bt == T_FLOAT || bt == T_DOUBLE) {
-        return false;
-      }
-      break;
+      return (bt != T_FLOAT && bt != T_DOUBLE);
     case Op_VectorLoadShuffle:
-      if (vlen < 4 || !UseLASX)
-        return false;
-      break;
+      return (UseLASX && vlen >= 4);
     case Op_VectorUCastB2X:
     case Op_VectorUCastS2X:
     case Op_VectorUCastI2X:
@@ -1056,13 +1042,12 @@ bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType bt) {
     case Op_VectorCastD2X:
     case Op_VectorLoadMask:
     case Op_VectorMaskCast:
-      if (!UseLASX)
-        return false;
-      break;
+      return UseLASX;
     case Op_VectorTest:
-      if (vlen * type2aelembytes(bt) < 16)
-        return false;
-      break;
+      return (vlen * type2aelembytes(bt) >= 16);
+    case Op_FmaVF:
+    case Op_FmaVD:
+      return UseFMA;
     default:
       break;
   }
@@ -9153,7 +9138,7 @@ instruct sqrtD_reg(regD dst, regD src) %{
 %}
 
 instruct sqrtF_reg(regF dst, regF src) %{
-  match(Set dst (ConvD2F (SqrtD (ConvF2D src))));
+  match(Set dst (SqrtF src));
   ins_cost(100);
   format %{ "SqrtF  $dst, $src @sqrtF_reg" %}
   ins_encode %{
@@ -11114,41 +11099,9 @@ instruct storeSSD(stackSlotD dst, regD src)
   ins_pipe( fpu_store );
 %}
 
-instruct cmpFastLock(FlagsReg cr, no_CR_mRegP object, no_CR_mRegP box,
-                     no_CR_mRegP tmp1, no_CR_mRegP tmp2, no_CR_mRegP tmp3) %{
-  predicate(LockingMode != LM_LIGHTWEIGHT);
-  match(Set cr (FastLock object box));
-  effect(TEMP tmp1, TEMP tmp2, TEMP tmp3);
-
-  format %{ "FASTLOCK $cr <-- $object, $box, $tmp1, $tmp2, $tmp3 #@ cmpFastLock" %}
-
-  ins_encode %{
-    __ fast_lock_c2($object$$Register, $box$$Register,
-                    $cr$$Register, $tmp1$$Register,
-                    $tmp2$$Register, $tmp3$$Register);
-  %}
-
-  ins_pipe( pipe_slow );
-%}
-
-instruct cmpFastUnlock(FlagsReg cr, no_CR_mRegP object, no_CR_mRegP box, no_CR_mRegP tmp1, no_CR_mRegP tmp2) %{
-  predicate(LockingMode != LM_LIGHTWEIGHT);
-  match(Set cr (FastUnlock object box));
-  effect(TEMP tmp1, TEMP tmp2);
-
-  format %{ "FASTUNLOCK $cr <-- $object, $box, $tmp1, $tmp2 #@ cmpFastUnlock" %}
-
-  ins_encode %{
-    __ fast_unlock_c2($object$$Register, $box$$Register, $cr$$Register, $tmp1$$Register, $tmp2$$Register);
-  %}
-
-  ins_pipe( pipe_slow );
-%}
-
 instruct cmpFastLockLightweight(FlagsReg cr, no_CR_mRegP object, no_CR_mRegP box,
                                 no_CR_mRegP tmp1, no_CR_mRegP tmp2,
                                 no_CR_mRegP tmp3, no_CR_mRegP tmp4) %{
-  predicate(LockingMode == LM_LIGHTWEIGHT);
   match(Set cr (FastLock object box));
   effect(TEMP tmp1, TEMP tmp2, TEMP tmp3, TEMP tmp4);
 
@@ -11165,7 +11118,6 @@ instruct cmpFastLockLightweight(FlagsReg cr, no_CR_mRegP object, no_CR_mRegP box
 %}
 
 instruct cmpFastUnlockLightweight(FlagsReg cr, no_CR_mRegP object, no_CR_mRegP box, no_CR_mRegP tmp1, no_CR_mRegP tmp2, no_CR_mRegP tmp3) %{
-  predicate(LockingMode == LM_LIGHTWEIGHT);
   match(Set cr (FastUnlock object box));
   effect(TEMP tmp1, TEMP tmp2, TEMP tmp3);
 
@@ -12823,6 +12775,122 @@ instruct divV(vReg dst, vReg src1, vReg src2) %{
       switch(Matcher::vector_element_basic_type(this)) {
         case T_FLOAT : __ vfdiv_s($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
         case T_DOUBLE: __ vfdiv_d($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// -------------------------------- Saturating ADD --------------------------------------
+
+instruct saddV(vReg dst, vReg src1, vReg src2) %{
+  predicate(!n->as_SaturatingVector()->is_unsigned());
+  match(Set dst (SaturatingAddV src1 src2));
+  format %{ "(x)vsadd    $dst, $src1, $src2\t# @saddV" %}
+  ins_encode %{
+    if (Matcher::vector_length_in_bytes(this) > 16) {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ xvsadd_b($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ xvsadd_h($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ xvsadd_w($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ xvsadd_d($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    } else {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ vsadd_b($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ vsadd_h($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ vsadd_w($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ vsadd_d($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct sadduV(vReg dst, vReg src1, vReg src2) %{
+  predicate(n->as_SaturatingVector()->is_unsigned());
+  match(Set dst (SaturatingAddV src1 src2));
+  format %{ "(x)vsaddu    $dst, $src1, $src2\t# @sadduV" %}
+  ins_encode %{
+    if (Matcher::vector_length_in_bytes(this) > 16) {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ xvsadd_bu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ xvsadd_hu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ xvsadd_wu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ xvsadd_du($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    } else {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ vsadd_bu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ vsadd_hu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ vsadd_wu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ vsadd_du($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// -------------------------------- Saturating SUB --------------------------------------
+
+instruct ssubV(vReg dst, vReg src1, vReg src2) %{
+  predicate(!n->as_SaturatingVector()->is_unsigned());
+  match(Set dst (SaturatingSubV src1 src2));
+  format %{ "(x)vssub    $dst, $src1, $src2\t# @ssubV" %}
+  ins_encode %{
+    if (Matcher::vector_length_in_bytes(this) > 16) {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ xvssub_b($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ xvssub_h($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ xvssub_w($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ xvssub_d($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    } else {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ vssub_b($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ vssub_h($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ vssub_w($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ vssub_d($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct ssubuV(vReg dst, vReg src1, vReg src2) %{
+  predicate(n->as_SaturatingVector()->is_unsigned());
+  match(Set dst (SaturatingSubV src1 src2));
+  format %{ "(x)vssubu    $dst, $src1, $src2\t# @ssubuV" %}
+  ins_encode %{
+    if (Matcher::vector_length_in_bytes(this) > 16) {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ xvssub_bu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ xvssub_hu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ xvssub_wu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ xvssub_du($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        default:
+          ShouldNotReachHere();
+      }
+    } else {
+      switch(Matcher::vector_element_basic_type(this)) {
+        case T_BYTE  : __ vssub_bu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_SHORT : __ vssub_hu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_INT   : __ vssub_wu($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
+        case T_LONG  : __ vssub_du($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister); break;
         default:
           ShouldNotReachHere();
       }
