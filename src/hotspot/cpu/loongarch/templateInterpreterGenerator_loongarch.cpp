@@ -138,7 +138,7 @@ address TemplateInterpreterGenerator::generate_CRC32_update_entry() {
 
   Label slow_path;
   // If we need a safepoint check, generate full interpreter entry.
-  __ safepoint_poll(slow_path, TREG, false /* at_return */, false /* acquire */, false /* in_nmethod */);
+  __ safepoint_poll(slow_path, TREG, false /* at_return */, false /* in_nmethod */);
 
   // We don't generate local frame and don't align stack because
   // we call stub code and there is no safepoint on this path.
@@ -181,7 +181,7 @@ address TemplateInterpreterGenerator::generate_CRC32_updateBytes_entry(AbstractI
 
   Label slow_path;
   // If we need a safepoint check, generate full interpreter entry.
-  __ safepoint_poll(slow_path, TREG, false /* at_return */, false /* acquire */, false /* in_nmethod */);
+  __ safepoint_poll(slow_path, TREG, false /* at_return */, false /* in_nmethod */);
 
   // We don't generate local frame and don't align stack because
   // we call stub code and there is no safepoint on this path.
@@ -1356,11 +1356,12 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 #endif
 
   __ li(t, _thread_in_native);
-  if (os::is_MP()) {
+  if (UseAMOForOrderingStore) {
     __ addi_d(AT, TREG, in_bytes(JavaThread::thread_state_offset()));
-    __ amswap_db_w(R0, t, AT);
+    __ amswap_db_w(R0, t, AT); // as Release
   } else {
-    __ st_w(t, TREG, in_bytes(JavaThread::thread_state_offset()));
+    __ membar(Assembler::Membar_mask_bits(__ LoadStore|__ StoreStore));
+    __ st_w(t, Address(TREG, JavaThread::thread_state_offset()));
   }
 
   __ push_cont_fastpath();
@@ -1384,16 +1385,19 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 
   // change thread state
   __ li(t, _thread_in_native_trans);
-  if (os::is_MP()) {
+
+  if (UseAMOForOrderingStore) {
     __ addi_d(AT, TREG, in_bytes(JavaThread::thread_state_offset()));
-    __ amswap_db_w(R0, t, AT); // Release-Store
+    __ amswap_db_w(R0, t, AT); // as Release and AnyAny
+  } else {
+    // Force all preceding writes to be observed prior to thread state change
+    __ membar(Assembler::Membar_mask_bits(__ LoadStore|__ StoreStore));
+    __ st_w(t, Address(TREG, JavaThread::thread_state_offset()));
 
     // Force this write out before the read below
     if (!UseSystemMemoryBarrier) {
       __ membar(__ AnyAny);
     }
-  } else {
-    __ st_w(t, TREG, in_bytes(JavaThread::thread_state_offset()));
   }
 
   // check for safepoint operation in progress and/or pending suspend requests
@@ -1407,15 +1411,8 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
     //
     Label slow_path;
 
-    // We need an acquire here to ensure that any subsequent load of the
-    // global SafepointSynchronize::_state flag is ordered after this load
-    // of the thread-local polling word.  We don't want this poll to
-    // return false (i.e. not safepointing) and a later poll of the global
-    // SafepointSynchronize::_state spuriously to return true.
-    //
-    // This is to avoid a race when we're in a native->Java transition
-    // racing the code which wakes up from a safepoint.
-    __ safepoint_poll(slow_path, TREG, true /* at_return */, true /* acquire */, false /* in_nmethod */);
+    // No need for acquire as Java threads always disarm themselves.
+    __ safepoint_poll(slow_path, TREG, true /* at_return */, false /* in_nmethod */);
     __ ld_w(AT, TREG, in_bytes(JavaThread::suspend_flags_offset()));
     __ beq(AT, R0, Continue);
     __ bind(slow_path);
@@ -1430,11 +1427,12 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 
   // change thread state
   __ li(t, _thread_in_Java);
-  if (os::is_MP()) {
+  if (UseAMOForOrderingStore) {
     __ addi_d(AT, TREG, in_bytes(JavaThread::thread_state_offset()));
-    __ amswap_db_w(R0, t, AT);
+    __ amswap_db_w(R0, t, AT); // as Release
   } else {
-    __ st_w(t, TREG, in_bytes(JavaThread::thread_state_offset()));
+    __ membar(Assembler::Membar_mask_bits(__ LoadStore|__ StoreStore));
+    __ st_w(t, Address(TREG, JavaThread::thread_state_offset()));
   }
 
   // Check preemption for Object.wait()
@@ -1551,7 +1549,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 
   Label slow_path;
   Label fast_path;
-  __ safepoint_poll(slow_path, TREG, true /* at_return */, false /* acquire */, false /* in_nmethod */);
+  __ safepoint_poll(slow_path, TREG, true /* at_return */, false /* in_nmethod */);
   __ b(fast_path);
 
   __ bind(slow_path);

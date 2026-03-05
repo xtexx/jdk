@@ -126,6 +126,7 @@ static void do_oop_load(InterpreterMacroAssembler* _masm,
 void TemplateTable::patch_bytecode(Bytecodes::Code bc, Register bc_reg,
                                    Register tmp_reg, bool load_bc_into_bc_reg/*=true*/,
                                    int byte_no) {
+  assert_different_registers(bc_reg, tmp_reg);
   if (!RewriteBytecodes)  return;
   Label L_patch_done;
 
@@ -154,7 +155,6 @@ void TemplateTable::patch_bytecode(Bytecodes::Code bc, Register bc_reg,
         __ lea(tmp_reg, Address(tmp_reg, in_bytes(ResolvedFieldEntry::put_code_offset())));
       }
       // Load-acquire the bytecode to match store-release in ResolvedFieldEntry::fill_in()
-      __ membar(MacroAssembler::AnyAny);
       __ ld_bu(tmp_reg, Address(tmp_reg, 0));
       __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
       __ addi_d(bc_reg, R0, bc);
@@ -195,7 +195,11 @@ void TemplateTable::patch_bytecode(Bytecodes::Code bc, Register bc_reg,
   __ bind(L_okay);
 #endif
 
-  // patch bytecode
+  // Patch bytecode with release store to coordinate with ResolvedFieldEntry loads
+  // in fast bytecode codelets. load_field_entry has a memory barrier that gains
+  // the needed ordering, together with control dependency on entering the fast codelet
+  // itself.
+  __ membar(Assembler::Membar_mask_bits(__ LoadStore | __ StoreStore));
   __ st_b(bc_reg, at_bcp(0));
   __ bind(L_patch_done);
 }
@@ -2197,7 +2201,6 @@ void TemplateTable::resolve_cache_and_index_for_method(int byte_no,
       break;
   }
   // Load-acquire the bytecode to match store-release in InterpreterRuntime
-  __ membar(MacroAssembler::AnyAny);
   __ ld_bu(temp, Address(temp, 0));
   __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
   // is resolved?
@@ -2251,7 +2254,6 @@ void TemplateTable::resolve_cache_and_index_for_field(int byte_no,
     __ lea(temp, Address(Rcache, in_bytes(ResolvedFieldEntry::put_code_offset())));
   }
   // Load-acquire the bytecode to match store-release in ResolvedFieldEntry::fill_in()
-  __ membar(MacroAssembler::AnyAny);
   __ ld_bu(temp, Address(temp, 0));
   __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
   __ li(AT, (int) code);  // have we resolved this bytecode?
@@ -2549,19 +2551,9 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static, RewriteContr
   const Register flags     = T1;
   const Register tos_state = T0;
 
-  const Register scratch = T8;
-
   resolve_cache_and_index_for_field(byte_no, cache, index);
   jvmti_post_field_access(cache, index, is_static, false);
   load_resolved_field_entry(obj, cache, tos_state, off, flags, is_static);
-
-  {
-    Label notVolatile;
-    __ test_bit(scratch, flags, ResolvedFieldEntry::is_volatile_shift);
-    __ beq(scratch, R0, notVolatile);
-    __ membar(MacroAssembler::AnyAny);
-    __ bind(notVolatile);
-  }
 
   if (!is_static) pop_and_check_object(obj);
 
@@ -2699,12 +2691,11 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static, RewriteContr
 
   __ bind(Done);
 
-  {
-    Label notVolatile;
-    __ beq(scratch, R0, notVolatile);
-    __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
-    __ bind(notVolatile);
-  }
+  Label notVolatile;
+  __ test_bit(AT, flags, ResolvedFieldEntry::is_volatile_shift);
+  __ beqz(AT, notVolatile);
+  __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
+  __ bind(notVolatile);
 }
 
 void TemplateTable::getfield(int byte_no) {
@@ -3068,6 +3059,7 @@ void TemplateTable::fast_storefield(TosState state) {
   __ load_field_entry(T3, T2);
   // T2: field offset, T3: field holder, T1: flags
   load_resolved_field_entry(T3, T3, noreg, T2, T1);
+  __ verify_field_offset(T2);
 
   Label Done;
   {
@@ -3133,9 +3125,6 @@ void TemplateTable::fast_storefield(TosState state) {
 // T2 : index & offset
 void TemplateTable::fast_accessfield(TosState state) {
   transition(atos, state);
-
-  const Register scratch = T8;
-
   // do the JVMTI work here to avoid disturbing the register state below
   if (JvmtiExport::can_post_field_access()) {
     // Check to see if a field access watch has been set before we take
@@ -3162,15 +3151,9 @@ void TemplateTable::fast_accessfield(TosState state) {
 
   // replace index with field offset from cache entry
   __ load_sized_value(T2, Address(T3, in_bytes(ResolvedFieldEntry::field_offset_offset())), sizeof(int), true /*is_signed*/);
-  __ ld_bu(T1, Address(T3, in_bytes(ResolvedFieldEntry::flags_offset())));
+  __ verify_field_offset(T2);
 
-  {
-    Label notVolatile;
-    __ test_bit(scratch, T1, ResolvedFieldEntry::is_volatile_shift);
-    __ beqz(scratch, notVolatile);
-    __ membar(MacroAssembler::AnyAny);
-    __ bind(notVolatile);
-  }
+  __ ld_bu(T1, Address(T3, in_bytes(ResolvedFieldEntry::flags_offset())));
 
   // FSR: object
   __ verify_oop(FSR);
@@ -3208,10 +3191,10 @@ void TemplateTable::fast_accessfield(TosState state) {
     default:
       ShouldNotReachHere();
   }
-
   {
     Label notVolatile;
-    __ beq(scratch, R0, notVolatile);
+    __ test_bit(AT, T1, ResolvedFieldEntry::is_volatile_shift);
+    __ beqz(AT, notVolatile);
     __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
     __ bind(notVolatile);
   }
@@ -3226,23 +3209,13 @@ void TemplateTable::fast_accessfield(TosState state) {
 void TemplateTable::fast_xaccess(TosState state) {
   transition(vtos, state);
 
-  const Register scratch = T8;
-
   // get receiver
   __ ld_d(T1, aaddress(0));
   // access constant pool cache
   __ load_field_entry(T3, T2, 2);
+
   __ load_sized_value(T2, Address(T3, in_bytes(ResolvedFieldEntry::field_offset_offset())), sizeof(int), true /*is_signed*/);
-
-  {
-    __ ld_bu(AT, Address(T3, in_bytes(ResolvedFieldEntry::flags_offset())));
-    __ test_bit(scratch, AT, ResolvedFieldEntry::is_volatile_shift);
-
-    Label notVolatile;
-    __ beq(scratch, R0, notVolatile);
-    __ membar(MacroAssembler::AnyAny);
-    __ bind(notVolatile);
-  }
+  __ verify_field_offset(T2);
 
   // make sure exception is reported in correct bcp range (getfield is
   // next instruction)
@@ -3260,14 +3233,17 @@ void TemplateTable::fast_xaccess(TosState state) {
   } else {
     ShouldNotReachHere();
   }
-  __ addi_d(BCP, BCP, -1);
 
   {
     Label notVolatile;
-    __ beq(scratch, R0, notVolatile);
+    __ ld_bu(T2, Address(T3, in_bytes(ResolvedFieldEntry::flags_offset())));
+    __ test_bit(AT, T2, ResolvedFieldEntry::is_volatile_shift);
+    __ beqz(AT, notVolatile);
     __ membar(Assembler::Membar_mask_bits(__ LoadLoad | __ LoadStore));
     __ bind(notVolatile);
   }
+
+  __ addi_d(BCP, BCP, -1);
 }
 
 
