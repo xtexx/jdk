@@ -508,7 +508,6 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       if (opConvert->_opr->is_valid())       do_input(opConvert->_opr);
       if (opConvert->_result->is_valid())    do_output(opConvert->_result);
       if (opConvert->_tmp->is_valid())       do_temp(opConvert->_tmp);
-      do_stub(opConvert->_stub);
 
       break;
     }
@@ -1016,9 +1015,6 @@ void LIR_OpBranch::emit_code(LIR_Assembler* masm) {
 
 void LIR_OpConvert::emit_code(LIR_Assembler* masm) {
   masm->emit_opConvert(this);
-  if (stub() != nullptr) {
-    masm->append_code_stub(stub());
-  }
 }
 
 void LIR_Op2::emit_code(LIR_Assembler* masm) {

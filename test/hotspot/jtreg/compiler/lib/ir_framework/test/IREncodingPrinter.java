@@ -121,6 +121,7 @@ public class IREncodingPrinter {
         "asimd",
         "sve",
         "sve2",
+        "svebitperm",
         "fphp",
         "asimdhp",
         // RISCV64
