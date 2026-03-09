@@ -1476,9 +1476,6 @@ void os::Linux::capture_initial_stack(size_t max_size) {
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// time support
-
 // thread_id is kernel thread id (similar to Solaris LWP id)
 intx os::current_thread_id() { return os::Linux::gettid(); }
 int os::current_process_id() {
