@@ -42,6 +42,7 @@ import java.nio.ByteOrder;
 /*
  * @test id=NoAlignVector
  * @bug 8310190
+ * @key randomness
  * @summary Test AlignVector with various loop init, stride, scale, invar, etc.
  * @modules java.base/jdk.internal.misc
  * @library /test/lib /
