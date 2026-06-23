@@ -39,7 +39,7 @@ import java.util.List;
  * @test StackWalkNativeToJava
  * @bug 8316309
  * @summary Check that walking the stack works fine when going from C++ frame to Java frame.
- * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64" | os.arch=="loongarch64"
+ * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64" | os.arch=="riscv64" | os.arch=="loongarch64"
  * @requires os.family != "windows"
  * @requires vm.flagless
  * @library /test/lib
